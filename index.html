@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>DC Metro Board</title>
+    <style>
+        @font-face {
+            font-family: 'Subway Ticker';
+            src: url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        body.station-display {
+            font-family: 'Subway Ticker', 'JetBrains Mono', 'Courier New', monospace;
+            background-color: black;
+            font-size: 48px;
+            color: burlywood;
+            padding: 0;
+        }
+
+        #hamburgerMenu {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        #menuButton {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        #menuButton:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+
+        body.station-display #menuButton {
+            background: rgba(255, 255, 255, 0.1);
+            color: burlywood;
+        }
+
+        #menuDropdown {
+            position: absolute;
+            top: 60px;
+            left: 0;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 15px;
+            min-width: 280px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+            color: #333;
+            z-index: 999;
+        }
+
+        body.station-display #menuDropdown {
+            background: rgba(0, 0, 0, 0.9);
+            color: burlywood;
+            border: 1px solid #333;
+        }
+
+        .menu-item {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .menu-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .menu-item label {
+            font-size: 14px;
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        body.station-display .menu-item label {
+            color: burlywood;
+            font-size: 16px;
+        }
+
+        #stations {
+            background: white;
+            color: #333;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            flex: 1;
+            min-width: 180px;
+        }
+
+        body.station-display #stations {
+            background: #222;
+            color: burlywood;
+            border-color: #555;
+        }
+
+        .display-toggle-btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .display-toggle-btn:hover {
+            background: #0056b3;
+        }
+
+        body.station-display .display-toggle-btn {
+            background: #333;
+            color: burlywood;
+        }
+
+        body.station-display .display-toggle-btn:hover {
+            background: #444;
+        }
+
+        #currentStation {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        body.station-display #currentStation {
+            color: red;
+            position: absolute;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 40px;
+            width: 99%;
+            background: none;
+            backdrop-filter: none;
+            border-radius: 0;
+            font-weight: normal;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        body.station-display table {
+            background: none;
+            border-radius: 0;
+            backdrop-filter: none;
+            margin-top: 100px;
+        }
+
+        .headers {
+            background: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+            padding: 15px 10px;
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        body.station-display .headers {
+            color: red;
+            font-size: 52px;
+            background: none;
+            border-bottom: none;
+            font-family: 'Subway Ticker', 'JetBrains Mono', 'Courier New', monospace;
+        }
+
+        td {
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        body.station-display td, body.station-display p {
+            text-align: center;
+            color: burlywood;
+            border-bottom: none;
+            padding: 5px 10px;
+        }
+
+        tr:nth-child(even) {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        body.station-display tr:nth-child(even) {
+            background: none;
+        }
+
+        tr:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        body.station-display tr:hover {
+            background: none;
+        }
+
+        .error-message {
+            text-align: center;
+            font-size: 18px;
+            color: #ffcccc;
+            margin: 20px 0;
+        }
+
+        body.station-display .error-message {
+            color: burlywood;
+            font-size: 48px;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            color: #cccccc;
+            margin: 20px 0;
+        }
+
+        body.station-display .loading {
+            color: burlywood;
+            font-size: 48px;
+        }
+
+        .last-updated {
+            text-align: center;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 20px;
+        }
+
+        body.station-display .last-updated {
+            color: burlywood;
+            font-size: 24px;
+        }
+
+        .line-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+
+        body.station-display .line-color {
+            display: none;
+        }
+
+        .line-RD { background-color: #E51636; }
+        .line-BL { background-color: #009CDE; }
+        .line-YL { background-color: #FFD320; }
+        .line-OR { background-color: #ED8B00; }
+        .line-GR { background-color: #00B04F; }
+        .line-SV { background-color: #919D9D; }
+    </style>
+</head>
+<body>
+    <div id="hamburgerMenu">
+        <button id="menuButton">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div id="menuDropdown">
+            <div class="menu-item">
+                <label>Station:</label>
+                <select id="stations">
+                    <option value="">Select a station</option>
+                </select>
+            </div>
+            <div class="menu-item">
+                <label>Display:</label>
+                <button class="display-toggle-btn" id="displayToggleBtn">
+                    <span id="displayModeText">Switch to Station Mode</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="currentStation">Metro Center (Red Line)</div>
+    <div id="trains">
+        <div class="loading">Loading train data...</div>
+    </div>
+
+    <div class="last-updated" id="lastUpdated"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/js/all.min.js"></script>
+    <script>
+        // App state variables
+        const appState = {
+            currentStationCode: 'A01',
+            currentStationName: "Metro Center (Red Line)",
+            updateInterval: null,
+            isStationDisplay: false
+        };
+        
+        const stations = [
+            {"code":"A01","name":"Metro Center (Red Line)"},
+            {"code":"A02","name":"Farragut North"},
+            {"code":"A03","name":"Dupont Circle"},
+            {"code":"A04","name":"Woodley Park-Zoo/Adams Morgan"},
+            {"code":"A05","name":"Cleveland Park"},
+            {"code":"A06","name":"Van Ness-UDC"},
+            {"code":"A07","name":"Tenleytown-AU"},
+            {"code":"A08","name":"Friendship Heights"},
+            {"code":"A09","name":"Bethesda"},
+            {"code":"A10","name":"Medical Center"},
+            {"code":"A11","name":"Grosvenor-Strathmore"},
+            {"code":"A12","name":"North Bethesda"},
+            {"code":"A13","name":"Twinbrook"},
+            {"code":"A14","name":"Rockville"},
+            {"code":"A15","name":"Shady Grove"},
+            {"code":"B01","name":"Gallery Pl-Chinatown (Green, Yellow Lines)"},
+            {"code":"B02","name":"Judiciary Square"},
+            {"code":"B03","name":"Union Station"},
+            {"code":"B04","name":"Rhode Island Ave-Brentwood"},
+            {"code":"B05","name":"Brookland-CUA"},
+            {"code":"B06","name":"Fort Totten (Red Line)"},
+            {"code":"B07","name":"Takoma"},
+            {"code":"B08","name":"Silver Spring"},
+            {"code":"B09","name":"Forest Glen"},
+            {"code":"B10","name":"Wheaton"},
+            {"code":"B11","name":"Glenmont"},
+            {"code":"B35","name":"NoMa-Gallaudet U"},
+            {"code":"C01","name":"Metro Center (Blue, Silver, Orange Lines)"},
+            {"code":"C02","name":"McPherson Square"},
+            {"code":"C03","name":"Farragut West"},
+            {"code":"C04","name":"Foggy Bottom-GWU"},
+            {"code":"C05","name":"Rosslyn"},
+            {"code":"C06","name":"Arlington Cemetery"},
+            {"code":"C07","name":"Pentagon"},
+            {"code":"C08","name":"Pentagon City"},
+            {"code":"C09","name":"Crystal City"},
+            {"code":"C10","name":"Ronald Reagan Washington National Airport"},
+            {"code":"C12","name":"Braddock Road"},
+            {"code":"C13","name":"King St-Old Town"},
+            {"code":"C14","name":"Eisenhower Avenue"},
+            {"code":"C15","name":"Huntington"},
+            {"code":"D01","name":"Federal Triangle"},
+            {"code":"D02","name":"Smithsonian"},
+            {"code":"D03","name":"L'Enfant Plaza (Blue, Silver Lines)"},
+            {"code":"D04","name":"Federal Center SW"},
+            {"code":"D05","name":"Capitol South"},
+            {"code":"D06","name":"Eastern Market"},
+            {"code":"D07","name":"Potomac Ave"},
+            {"code":"D08","name":"Stadium-Armory"},
+            {"code":"D09","name":"Minnesota Ave"},
+            {"code":"D10","name":"Deanwood"},
+            {"code":"D11","name":"Cheverly"},
+            {"code":"D12","name":"Landover"},
+            {"code":"D13","name":"New Carrollton"},
+            {"code":"E01","name":"Mt Vernon Sq 7th St-Convention Center"},
+            {"code":"E02","name":"Shaw-Howard U"},
+            {"code":"E03","name":"U Street/African-Amer Civil War Memorial/Cardozo"},
+            {"code":"E04","name":"Columbia Heights"},
+            {"code":"E05","name":"Georgia Ave-Petworth"},
+            {"code":"E06","name":"Fort Totten (Green Line)"},
+            {"code":"E07","name":"West Hyattsville"},
+            {"code":"E08","name":"Hyattsville Crossing"},
+            {"code":"E09","name":"College Park-U of Md"},
+            {"code":"E10","name":"Greenbelt"},
+            {"code":"F01","name":"Gallery Pl-Chinatown (Red Line)"},
+            {"code":"F02","name":"Archives-Navy Memorial-Penn Quarter"},
+            {"code":"F03","name":"L'Enfant Plaza (Yellow, Green Lines)"},
+            {"code":"F04","name":"Waterfront"},
+            {"code":"F05","name":"Navy Yard-Ballpark"},
+            {"code":"F06","name":"Anacostia"},
+            {"code":"F07","name":"Congress Heights"},
+            {"code":"F08","name":"Southern Avenue"},
+            {"code":"F09","name":"Naylor Road"},
+            {"code":"F10","name":"Suitland"},
+            {"code":"F11","name":"Branch Ave"},
+            {"code":"G01","name":"Benning Road"},
+            {"code":"G02","name":"Capitol Heights"},
+            {"code":"G03","name":"Addison Road-Seat Pleasant"},
+            {"code":"G04","name":"Morgan Boulevard"},
+            {"code":"G05","name":"Downtown Largo"},
+            {"code":"J02","name":"Van Dorn Street"},
+            {"code":"J03","name":"Franconia-Springfield"},
+            {"code":"K01","name":"Court House"},
+            {"code":"K02","name":"Clarendon"},
+            {"code":"K03","name":"Virginia Square-GMU"},
+            {"code":"K04","name":"Ballston-MU"},
+            {"code":"K05","name":"East Falls Church"},
+            {"code":"K06","name":"West Falls Church"},
+            {"code":"K07","name":"Dunn Loring-Merrifield"},
+            {"code":"K08","name":"Vienna/Fairfax-GMU"},
+            {"code":"N01","name":"McLean"},
+            {"code":"N02","name":"Tysons"},
+            {"code":"N03","name":"Greensboro"},
+            {"code":"N04","name":"Spring Hill"},
+            {"code":"N06","name":"Wiehle-Reston East"},
+            {"code":"N07","name":"Reston Town Center"},
+            {"code":"N08","name":"Herndon"},
+            {"code":"N09","name":"Innovation Center"},
+            {"code":"N10","name":"Washington Dulles International Airport"},
+            {"code":"N11","name":"Loudoun Gateway"},
+            {"code":"N12","name":"Ashburn"}
+        ];
+
+        // Initialize app when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing app...');
+            initializeApp();
+        });
+
+        function initializeApp() {
+            populateStations();
+            showDisplay();
+            setupEventListeners();
+            
+            // Set up auto-refresh every 60 seconds
+            appState.updateInterval = setInterval(showDisplay, 60000);
+            console.log('App initialized successfully');
+        }
+
+        function setupEventListeners() {
+            // Menu button
+            const menuBtn = document.getElementById('menuButton');
+            if (menuBtn) {
+                menuBtn.addEventListener('click', toggleMenu);
+            }
+
+            // Display toggle button
+            const displayBtn = document.getElementById('displayToggleBtn');
+            if (displayBtn) {
+                displayBtn.addEventListener('click', toggleDisplay);
+            }
+
+            // Station selector
+            const stationSelect = document.getElementById('stations');
+            if (stationSelect) {
+                stationSelect.addEventListener('change', changeStation);
+            }
+
+            // Close menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const menu = document.getElementById('hamburgerMenu');
+                const dropdown = document.getElementById('menuDropdown');
+                
+                if (menu && dropdown && !menu.contains(event.target)) {
+                    dropdown.style.display = 'none';
+                }
+            });
+
+            console.log('Event listeners set up');
+        }
+
+        function toggleMenu() {
+            const dropdown = document.getElementById('menuDropdown');
+            if (dropdown) {
+                const isVisible = dropdown.style.display === 'block';
+                dropdown.style.display = isVisible ? 'none' : 'block';
+                console.log('Menu toggled:', dropdown.style.display);
+            }
+        }
+
+        function toggleDisplay() {
+            console.log('Toggle display called');
+            
+            appState.isStationDisplay = !appState.isStationDisplay;
+            
+            if (document.body) {
+                document.body.className = appState.isStationDisplay ? 'station-display' : '';
+            }
+            
+            const displayModeText = document.getElementById('displayModeText');
+            if (displayModeText) {
+                displayModeText.textContent = appState.isStationDisplay ? 'Switch to App Mode' : 'Switch to Station Mode';
+            }
+            
+            // Close menu
+            const dropdown = document.getElementById('menuDropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+            
+            console.log('Display mode:', appState.isStationDisplay ? 'Station' : 'App');
+        }
+
+        function populateStations() {
+            const stationSelect = document.getElementById('stations');
+            if (!stationSelect) return;
+            
+            const sortedStations = [...stations].sort((a, b) => a.name.localeCompare(b.name));
+            
+            // Clear and repopulate
+            stationSelect.innerHTML = '<option value="">Select a station</option>';
+            
+            sortedStations.forEach(station => {
+                const option = document.createElement('option');
+                option.value = station.code;
+                option.textContent = station.name;
+                stationSelect.appendChild(option);
+            });
+        }
+
+        function changeStation() {
+            const stationSelect = document.getElementById('stations');
+            if (!stationSelect || !stationSelect.value) return;
+            
+            const selectedCode = stationSelect.value;
+            const selectedName = stationSelect.options[stationSelect.selectedIndex].text;
+            
+            appState.currentStationCode = selectedCode;
+            appState.currentStationName = selectedName;
+            
+            showDisplay();
+            
+            // Close menu
+            const dropdown = document.getElementById('menuDropdown');
+            if (dropdown) {
+                dropdown.style.display = 'none';
+            }
+            
+            console.log('Station changed to:', selectedName);
+        }
+
+        function showDisplay() {
+            simulateTrainData();
+        }
+
+        function simulateTrainData() {
+            const lines = ['RD', 'BL', 'YL', 'OR', 'GR', 'SV'];
+            const destinations = [
+                'Shady Grove', 'Glenmont', 'Downtown Largo', 'Franconia-Springfield',
+                'Huntington', 'Branch Ave', 'Greenbelt', 'New Carrollton',
+                'Vienna/Fairfax-GMU', 'Ashburn', 'Wiehle-Reston East'
+            ];
+            
+            const trains = [];
+            const numTrains = Math.floor(Math.random() * 6) + 2;
+            
+            for (let i = 0; i < numTrains; i++) {
+                trains.push({
+                    Line: lines[Math.floor(Math.random() * lines.length)],
+                    Car: Math.floor(Math.random() * 2) + 6,
+                    DestinationName: destinations[Math.floor(Math.random() * destinations.length)],
+                    Min: Math.random() < 0.1 ? 'BRD' : Math.random() < 0.1 ? 'ARR' : Math.floor(Math.random() * 15) + 1
+                });
+            }
+            
+            displayTrains({ Trains: trains });
+            updateLastUpdated();
+        }
+
+        function displayTrains(data) {
+            let output = "<table cellspacing='0' cellpadding='0'>";
+            output += "<tr><td class='headers'>LINE</td><td class='headers'>CAR</td><td class='headers'>DESTINATION</td><td class='headers'>MIN</td></tr>";
+            
+            if (data.Trains && data.Trains.length > 0) {
+                data.Trains.forEach(train => {
+                    const lineColor = `line-${train.Line}`;
+                    output += `<tr>
+                        <td><span class="line-color ${lineColor}"></span>${train.Line}</td>
+                        <td>${train.Car}</td>
+                        <td>${train.DestinationName}</td>
+                        <td>${train.Min}</td>
+                    </tr>`;
+                });
+            } else {
+                output += "<tr><td colspan='4' class='error-message'>No trains currently scheduled</td></tr>";
+            }
+            
+            output += '</table>';
+            
+            const trainsEl = document.getElementById("trains");
+            const currentStationEl = document.getElementById("currentStation");
+            
+            if (trainsEl) {
+                trainsEl.innerHTML = output;
+            }
+            if (currentStationEl) {
+                currentStationEl.innerHTML = appState.currentStationName;
+            }
+        }
+
+        function updateLastUpdated() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            const lastUpdatedEl = document.getElementById('lastUpdated');
+            if (lastUpdatedEl) {
+                lastUpdatedEl.innerHTML = `Last updated: ${timeString}`;
+            }
+        }
+    </script>
+</body>
+</html>
