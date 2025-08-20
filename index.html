@@ -4,13 +4,17 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>DC Metro Board</title>
     <style>
-        @font-face {
+        /* @font-face {
             font-family: 'Subway Ticker';
             src: url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
             font-family: 'JetBrains Mono', 'Courier New', monospace;
+        } */
+        @font-face {
+            font-family: 'Subway Ticker';
+            src: url('SubwayTicker.ttf');
         }
 
-        body {
+        body.app-display {
             font-family: 'Arial', sans-serif;
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             color: white;
@@ -21,7 +25,7 @@
         }
 
         body.station-display {
-            font-family: 'Subway Ticker', 'JetBrains Mono', 'Courier New', monospace;
+            font-family: 'Subway Ticker', 'Courier New', monospace;
             background-color: black;
             font-size: 48px;
             color: burlywood;
@@ -155,7 +159,7 @@
 
         body.station-display #currentStation {
             color: red;
-            position: absolute;
+            /* position: absolute; */
             margin-top: 20px;
             text-align: center;
             font-size: 40px;
@@ -164,6 +168,7 @@
             backdrop-filter: none;
             border-radius: 0;
             font-weight: normal;
+            /* top: 70%; */
         }
 
         table {
@@ -191,6 +196,7 @@
         }
 
         body.station-display .headers {
+            font-weight: 400;
             color: red;
             font-size: 52px;
             background: none;
@@ -263,7 +269,7 @@
             font-size: 24px;
         }
 
-        .line-color {
+        span.line-color {
             display: inline-block;
             width: 20px;
             height: 20px;
@@ -271,7 +277,7 @@
             margin-right: 5px;
         }
 
-        body.station-display .line-color {
+        body.station-display span.line-color {
             display: none;
         }
 
@@ -283,7 +289,7 @@
         .line-SV { background-color: #919D9D; }
     </style>
 </head>
-<body>
+<body class="station-display">
     <div id="hamburgerMenu">
         <button id="menuButton">
             <i class="fas fa-bars"></i>
@@ -309,7 +315,7 @@
         <div class="loading">Loading train data...</div>
     </div>
 
-    <div class="last-updated" id="lastUpdated"></div>
+    <!-- <div class="last-updated" id="lastUpdated"></div> -->
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.3.0/js/all.min.js"></script>
     <script>
@@ -318,7 +324,7 @@
             currentStationCode: 'A01',
             currentStationName: "Metro Center (Red Line)",
             updateInterval: null,
-            isStationDisplay: false
+            isStationDisplay: true
         };
         
         const stations = [
@@ -427,7 +433,7 @@
 
         // Initialize app when DOM is ready
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM loaded, initializing app...');
+            //console.log('DOM loaded, initializing app...');
             initializeApp();
         });
 
@@ -438,7 +444,7 @@
             
             // Set up auto-refresh every 60 seconds
             appState.updateInterval = setInterval(showDisplay, 60000);
-            console.log('App initialized successfully');
+            //console.log('App initialized successfully');
         }
 
         function setupEventListeners() {
@@ -470,7 +476,7 @@
                 }
             });
 
-            console.log('Event listeners set up');
+            //console.log('Event listeners set up');
         }
 
         function toggleMenu() {
@@ -478,17 +484,18 @@
             if (dropdown) {
                 const isVisible = dropdown.style.display === 'block';
                 dropdown.style.display = isVisible ? 'none' : 'block';
-                console.log('Menu toggled:', dropdown.style.display);
+                //console.log('Menu toggled:', dropdown.style.display);
             }
         }
 
         function toggleDisplay() {
-            console.log('Toggle display called');
+            //console.log('Toggle display called: ' + document.body.classList.contains('station-display'));
             
             appState.isStationDisplay = !appState.isStationDisplay;
+            ////console.log(appState)
             
             if (document.body) {
-                document.body.className = appState.isStationDisplay ? 'station-display' : '';
+                document.body.className = appState.isStationDisplay ? 'station-display' : 'app-display';
             }
             
             const displayModeText = document.getElementById('displayModeText');
@@ -501,8 +508,8 @@
             if (dropdown) {
                 dropdown.style.display = 'none';
             }
-            
-            console.log('Display mode:', appState.isStationDisplay ? 'Station' : 'App');
+            showDisplay();
+            //console.log('Display mode:', appState.isStationDisplay ? 'Station' : 'App');
         }
 
         function populateStations() {
@@ -540,38 +547,65 @@
                 dropdown.style.display = 'none';
             }
             
-            console.log('Station changed to:', selectedName);
+            //console.log('Station changed to:', selectedName);
         }
 
-        function showDisplay() {
-            simulateTrainData();
+        function objectToQueryString(obj) {
+            return Object.keys(obj)
+                .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]))
+                .join('&');
         }
 
-        function simulateTrainData() {
-            const lines = ['RD', 'BL', 'YL', 'OR', 'GR', 'SV'];
-            const destinations = [
-                'Shady Grove', 'Glenmont', 'Downtown Largo', 'Franconia-Springfield',
-                'Huntington', 'Branch Ave', 'Greenbelt', 'New Carrollton',
-                'Vienna/Fairfax-GMU', 'Ashburn', 'Wiehle-Reston East'
-            ];
-            
-            const trains = [];
-            const numTrains = Math.floor(Math.random() * 6) + 2;
-            
-            for (let i = 0; i < numTrains; i++) {
-                trains.push({
-                    Line: lines[Math.floor(Math.random() * lines.length)],
-                    Car: Math.floor(Math.random() * 2) + 6,
-                    DestinationName: destinations[Math.floor(Math.random() * destinations.length)],
-                    Min: Math.random() < 0.1 ? 'BRD' : Math.random() < 0.1 ? 'ARR' : Math.floor(Math.random() * 15) + 1
-                });
-            }
-            
-            displayTrains({ Trains: trains });
-            updateLastUpdated();
+        function showDisplay() { 
+            var params = {
+                "api_key": "5f4edc894c164d6daefa973fb3cbdfdd",
+            };
+
+            var stationCode = arguments.length ? arguments[0] : appState.currentStationCode;
+
+            fetch(`https://api.wmata.com/StationPrediction.svc/json/GetPrediction/${stationCode}?${objectToQueryString(params)}`, {
+                method: 'GET'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                //app-display
+                ////console.log(document.body.classList.contains('app-display'))
+                if(appState.isStationDisplay) {
+                    var output = "<table cellspacing=0 cellpadding=0><tr><td class='headers'>LN</td><td class='headers'>CAR</td><td class='headers'>DEST</td><td class='headers'>MIN</td></tr>";
+                        for(let i = 0; i < data.Trains.length; i++) {
+                            output += '<tr><td>' + data.Trains[i]['Line'] + '</td><td>' + data.Trains[i]['Car'] + '</td><td>' + data.Trains[i]['DestinationName'] + '</td><td>' + data.Trains[i]['Min'] + "</td></tr>";
+                        }
+
+                } else {
+                    var output = "<table cellspacing=0 cellpadding=0><tr><td class='headers'>Line</td><td class='headers'>Cars</td><td class='headers'>Destination</td><td class='headers'>Minutes</td></tr>";
+                        for(let i = 0; i < data.Trains.length; i++) {
+                            const lineColor = `line-${data.Trains[i].Line}`;
+                            // output += '<tr><td>' + data.Trains[i]['Line'] + '</td><td>' + data.Trains[i]['Car'] + '</td><td>' + data.Trains[i]['DestinationName'] + '</td><td>' + data.Trains[i]['Min'] + "</td></tr>";
+                            output += `<tr>
+                                <td><span class="line-color ${lineColor}"></span>${data.Trains[i]['Line']}</td>
+                                <td>${data.Trains[i]['Car']}</td>
+                                <td>${data.Trains[i]['DestinationName']}</td>
+                                <td>${data.Trains[i]['Min']}</td>
+                            </tr>`;                    
+                        }
+                }
+                output += '</table>';
+                document.getElementById("trains").innerHTML = output;
+                document.getElementById("currentStation").innerHTML = appState.currentStationName;
+            })
+            .catch(error => {
+                const output = "<table cellspacing=0 cellpadding=0><tr><th>LN</th><th>CAR</th><th>DEST</th><th>MIN</th></tr></table><p>Train data is not available</p>";
+                document.getElementById("trains").innerHTML = output;
+            });
         }
 
-        function displayTrains(data) {
+
+ /*       function displayTrains(data) {
             let output = "<table cellspacing='0' cellpadding='0'>";
             output += "<tr><td class='headers'>LINE</td><td class='headers'>CAR</td><td class='headers'>DESTINATION</td><td class='headers'>MIN</td></tr>";
             
@@ -600,7 +634,7 @@
             if (currentStationEl) {
                 currentStationEl.innerHTML = appState.currentStationName;
             }
-        }
+        } */
 
         function updateLastUpdated() {
             const now = new Date();
