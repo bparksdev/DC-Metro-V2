@@ -28,7 +28,7 @@
             <div class="menu-item">
                 <label>Display:</label>
                 <button class="display-toggle-btn" id="displayToggleBtn">
-                    <span id="displayModeText">Switch to Station Mode</span>
+                    <span id="displayModeText">Switch to App Mode</span>
                 </button>
             </div>
         </div>
@@ -194,6 +194,7 @@
 
         function initializeApp() {
             updateViewportLayout();
+            updateDisplayModeButtonText();
             loadFavorites();
             populateStations();
             renderFavorites();
@@ -298,11 +299,8 @@
             if (document.body) {
                 document.body.className = appState.isStationDisplay ? 'station-display' : 'app-display';
             }
-            
-            const displayModeText = document.getElementById('displayModeText');
-            if (displayModeText) {
-                displayModeText.textContent = appState.isStationDisplay ? 'Switch to App Mode' : 'Switch to Station Mode';
-            }
+
+            updateDisplayModeButtonText();
             
             // Close menu
             const dropdown = document.getElementById('menuDropdown');
@@ -311,6 +309,15 @@
             }
             showDisplay();
             //console.log('Display mode:', appState.isStationDisplay ? 'Station' : 'App');
+        }
+
+        function updateDisplayModeButtonText() {
+            const displayModeText = document.getElementById('displayModeText');
+            if (!displayModeText) return;
+
+            displayModeText.textContent = appState.isStationDisplay
+                ? 'Switch to App Mode'
+                : 'Switch to Station Mode';
         }
 
         function populateStations() {
