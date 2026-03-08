@@ -8,9 +8,13 @@
     src: url('SubwayTicker.ttf');
 }
 
+:root {
+    --vh: 1vh;
+}
+
 html, body {
     width: 100%;
-    height: 100%;
+    height: calc(var(--vh, 1vh) * 100);
     margin: 0;
     padding: 0;
     overflow-x: hidden;
@@ -26,7 +30,7 @@ body.app-display {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
     padding: 20px;
-    min-height: 100vh;
+    min-height: calc(var(--vh, 1vh) * 100);
     transition: all 0.3s ease;
     box-sizing: border-box;
 }
@@ -187,12 +191,41 @@ body.station-display #currentStation {
     border: none;
     padding: 12px 20px;
     border-radius: 5px;
-    font-size: 18px;
+    font-size: 24px;
     cursor: pointer;
     transition: background 0.3s ease;
     margin: 10px auto 20px;
     display: block;
     max-width: 400px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 10px auto 20px;
+}
+
+.action-buttons #addFavoriteBtnMain {
+    margin: 0;
+}
+
+.incidents-btn {
+    background: #ff9800;
+    color: #111;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    font-size: 24px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    max-width: 400px;
+}
+
+.incidents-btn:hover {
+    background: #e68900;
 }
 
 #addFavoriteBtnMain:hover {
@@ -205,6 +238,10 @@ body.station-display #currentStation {
 }
 
 body.station-display #addFavoriteBtnMain {
+    display: none;
+}
+
+body.station-display .action-buttons {
     display: none;
 }
 
@@ -451,6 +488,122 @@ body.station-display .footer a:hover {
     color: burlywood;
 }
 
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-card {
+    width: min(900px, 95vw);
+    max-height: 90vh;
+    overflow: hidden;
+    border-radius: 12px;
+    background: #0f172a;
+    color: #f8fafc;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 28px;
+}
+
+.modal-close-btn {
+    border: none;
+    background: transparent;
+    color: #f8fafc;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+.modal-content {
+    padding: 16px 20px 20px;
+    overflow-y: auto;
+}
+
+.incident-section {
+    margin-bottom: 20px;
+}
+
+.incident-section h3 {
+    margin: 0 0 10px;
+    font-size: 24px;
+    color: #93c5fd;
+}
+
+.incident-item {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.incident-item h4 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: #f8fafc;
+}
+
+.incident-item p {
+    margin: 4px 0;
+    font-size: 18px;
+    color: #e2e8f0;
+}
+
+.incident-meta {
+    margin-top: 6px;
+    font-size: 15px;
+    color: #cbd5e1;
+}
+
+.modal-empty {
+    font-size: 18px;
+    color: #cbd5e1;
+    padding: 8px 0;
+}
+
+body.app-display[data-portrait="true"] #currentStation {
+    font-size: 24px;
+    padding: 10px;
+}
+
+body.app-display[data-portrait="true"] .headers {
+    font-size: 20px;
+    padding: 10px 6px;
+}
+
+body.app-display[data-portrait="true"] td {
+    font-size: 22px;
+    padding: 10px 8px;
+}
+
+body.app-display[data-portrait="true"] .datetime-display {
+    font-size: 20px;
+}
+
+body.app-display[data-portrait="true"] .footer {
+    margin-top: 16px;
+    padding: 12px;
+}
+
 /* Mobile portrait optimizations */
 @media screen and (max-width: 768px) and (orientation: portrait) {
     #menuButton {
@@ -492,5 +645,30 @@ body.station-display .footer a:hover {
         font-size: 18px;
         padding: 12px 20px;
         width: 100%;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+    }
+
+    .action-buttons #addFavoriteBtnMain,
+    .incidents-btn {
+        width: 100%;
+        font-size: 20px;
+    }
+
+    .modal-card {
+        width: 100%;
+        max-height: 95vh;
+    }
+
+    .modal-header h2 {
+        font-size: 22px;
+    }
+
+    .incident-section h3 {
+        font-size: 20px;
     }
 }

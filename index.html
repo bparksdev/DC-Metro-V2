@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>DC Metro Board</title>
     <link rel="stylesheet" href="styles.css">
@@ -33,9 +35,14 @@
     </div>
 
     <div id="currentStation">Metro Center (Red Line)</div>
-    <button id="addFavoriteBtnMain">
-        <i class="fas fa-star"></i> Save Current Station
-    </button>
+    <div class="action-buttons">
+        <button id="addFavoriteBtnMain">
+            <i class="fas fa-star"></i> Save Current Station
+        </button>
+        <button id="showIncidentsBtnMain" class="incidents-btn">
+            <i class="fas fa-triangle-exclamation"></i> Incidents
+        </button>
+    </div>
     <div id="trains">
         <div class="loading">Loading train data...</div>
     </div>
@@ -45,6 +52,20 @@
     <div class="footer">
         Powered By the <a href="https://developer.wmata.com/" target="_blank" rel="noopener noreferrer">WMATA API</a> | 
         <a href="https://www.wmata.com/" target="_blank" rel="noopener noreferrer">WMATA.com</a>
+    </div>
+
+    <div id="incidentsModal" class="modal-overlay" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="incidentsModalTitle">
+            <div class="modal-header">
+                <h2 id="incidentsModalTitle">Station Incidents</h2>
+                <button id="closeIncidentsModalBtn" class="modal-close-btn" aria-label="Close incidents modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="incidentsModalContent" class="modal-content">
+                <div class="loading">Loading incidents...</div>
+            </div>
+        </div>
     </div>
 
     <!-- <div class="last-updated" id="lastUpdated"></div> -->
@@ -172,6 +193,7 @@
         });
 
         function initializeApp() {
+            updateViewportLayout();
             loadFavorites();
             populateStations();
             renderFavorites();
@@ -188,6 +210,9 @@
         }
 
         function setupEventListeners() {
+            window.addEventListener('resize', updateViewportLayout);
+            window.addEventListener('orientationchange', updateViewportLayout);
+
             // Menu button
             const menuBtn = document.getElementById('menuButton');
             if (menuBtn) {
@@ -212,6 +237,28 @@
                 addFavBtnMain.addEventListener('click', addFavorite);
             }
 
+            // Incidents button (main)
+            const showIncidentsBtnMain = document.getElementById('showIncidentsBtnMain');
+            if (showIncidentsBtnMain) {
+                showIncidentsBtnMain.addEventListener('click', openIncidentsModal);
+            }
+
+            // Incidents modal close button
+            const closeIncidentsModalBtn = document.getElementById('closeIncidentsModalBtn');
+            if (closeIncidentsModalBtn) {
+                closeIncidentsModalBtn.addEventListener('click', closeIncidentsModal);
+            }
+
+            // Close modal when clicking overlay
+            const incidentsModal = document.getElementById('incidentsModal');
+            if (incidentsModal) {
+                incidentsModal.addEventListener('click', function(event) {
+                    if (event.target === incidentsModal) {
+                        closeIncidentsModal();
+                    }
+                });
+            }
+
             // Close menu when clicking outside
             document.addEventListener('click', function(event) {
                 const menu = document.getElementById('hamburgerMenu');
@@ -223,6 +270,14 @@
             });
 
             //console.log('Event listeners set up');
+        }
+
+        function updateViewportLayout() {
+            const vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+
+            const isPortrait = window.innerHeight >= window.innerWidth;
+            document.body.setAttribute('data-portrait', isPortrait ? 'true' : 'false');
         }
 
         function toggleMenu() {
@@ -451,6 +506,167 @@
             } else {
                 btn.innerHTML = '<i class="fas fa-star"></i> Save Current Station';
             }
+        }
+
+        function openIncidentsModal() {
+            const modal = document.getElementById('incidentsModal');
+            if (!modal) return;
+
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            loadStationIncidents();
+        }
+
+        function closeIncidentsModal() {
+            const modal = document.getElementById('incidentsModal');
+            if (!modal) return;
+
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function normalizeText(text) {
+            return String(text || '').toLowerCase().trim();
+        }
+
+        function baseStationName(stationName) {
+            return String(stationName || '').replace(/\s*\([^)]*\)\s*/g, '').trim();
+        }
+
+        function escapeHtml(text) {
+            return String(text || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function matchesStationText(value, stationName) {
+            const candidate = normalizeText(value);
+            const baseName = normalizeText(baseStationName(stationName));
+            return Boolean(candidate && baseName && candidate.includes(baseName));
+        }
+
+        function incidentMatchesStation(incident, stationCode, stationName) {
+            const code = normalizeText(stationCode);
+            const codeCandidates = [incident.StationCode, incident.StationCode1, incident.StationCode2]
+                .filter(Boolean)
+                .map(normalizeText);
+
+            if (code && codeCandidates.includes(code)) {
+                return true;
+            }
+
+            const textFields = [
+                incident.Description,
+                incident.IncidentType,
+                incident.LocationDescription,
+                incident.StationName,
+                incident.UnitName,
+                incident.SymptomDescription,
+                incident.LinesAffected
+            ];
+
+            return textFields.some(field => matchesStationText(field, stationName));
+        }
+
+        function renderRailIncidents(incidents) {
+            if (!incidents.length) {
+                return '<div class="modal-empty">No active rail incidents for this station.</div>';
+            }
+
+            return incidents.map(incident => {
+                const title = escapeHtml(incident.IncidentType || 'Rail Incident');
+                const description = escapeHtml(incident.Description || 'No additional details.');
+                const lines = escapeHtml(incident.LinesAffected || 'N/A');
+                const updated = escapeHtml(incident.DateUpdated || 'N/A');
+
+                return `
+                    <div class="incident-item">
+                        <h4>${title}</h4>
+                        <p>${description}</p>
+                        <div class="incident-meta">Lines: ${lines}</div>
+                        <div class="incident-meta">Updated: ${updated}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAccessibilityOutages(outages) {
+            if (!outages.length) {
+                return '<div class="modal-empty">No active elevator/escalator outages for this station.</div>';
+            }
+
+            return outages.map(outage => {
+                const unitType = escapeHtml(outage.UnitType || 'Accessibility Unit');
+                const location = escapeHtml(outage.LocationDescription || outage.UnitName || 'Location unavailable');
+                const details = escapeHtml(outage.SymptomDescription || 'No additional details.');
+                const updated = escapeHtml(outage.DateUpdated || outage.DateOutOfServ || 'N/A');
+                const estReturn = escapeHtml(outage.EstimatedReturnToService || 'Not provided');
+
+                return `
+                    <div class="incident-item outage-item">
+                        <h4>${unitType}</h4>
+                        <p>${location}</p>
+                        <p>${details}</p>
+                        <div class="incident-meta">Updated: ${updated}</div>
+                        <div class="incident-meta">Estimated return: ${estReturn}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function loadStationIncidents() {
+            const content = document.getElementById('incidentsModalContent');
+            if (!content) return;
+
+            content.innerHTML = '<div class="loading">Loading incidents...</div>';
+
+            const params = {
+                api_key: '5f4edc894c164d6daefa973fb3cbdfdd'
+            };
+
+            const stationCode = appState.currentStationCode;
+            const stationName = appState.currentStationName;
+
+            const railUrl = `https://api.wmata.com/Incidents.svc/json/Incidents?${objectToQueryString(params)}`;
+            const elevatorUrl = `https://api.wmata.com/Incidents.svc/json/ElevatorIncidents?${objectToQueryString(params)}`;
+
+            Promise.all([
+                fetch(railUrl).then(response => {
+                    if (!response.ok) throw new Error('Failed rail incidents request');
+                    return response.json();
+                }),
+                fetch(elevatorUrl).then(response => {
+                    if (!response.ok) throw new Error('Failed elevator incidents request');
+                    return response.json();
+                })
+            ])
+            .then(([railData, elevatorData]) => {
+                const railIncidents = (railData.Incidents || []).filter(incident =>
+                    incidentMatchesStation(incident, stationCode, stationName)
+                );
+
+                const outageSource = elevatorData.ElevatorIncidents || elevatorData.Outages || [];
+                const outages = outageSource.filter(outage =>
+                    incidentMatchesStation(outage, stationCode, stationName)
+                );
+
+                content.innerHTML = `
+                    <div class="incident-section">
+                        <h3>Rail Incidents (${railIncidents.length})</h3>
+                        ${renderRailIncidents(railIncidents)}
+                    </div>
+                    <div class="incident-section">
+                        <h3>Elevator/Escalator Outages (${outages.length})</h3>
+                        ${renderAccessibilityOutages(outages)}
+                    </div>
+                `;
+            })
+            .catch(() => {
+                content.innerHTML = '<div class="error-message">Unable to load incidents right now.</div>';
+            });
         }
 
 
