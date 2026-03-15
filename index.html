@@ -385,9 +385,9 @@
                 //app-display
                 ////console.log(document.body.classList.contains('app-display'))
                 if(appState.isStationDisplay) {
-                    var output = "<table cellspacing=0 cellpadding=0><tr><td class='headers'>LN</td><td class='headers'>CAR</td><td class='headers'>DEST</td><td class='headers'>MIN</td></tr>";
+                    var output = "<table cellspacing=0 cellpadding=0><tr><td class='headers' style='text-align: left;'>LN</td><td class='headers' style='text-align: left;'>CAR</td><td class='headers' style='text-align: left;'>DEST</td><td class='headers' style='text-align: right;'>MIN</td></tr>";
                         for(let i = 0; i < data.Trains.length; i++) {
-                            output += '<tr><td>' + data.Trains[i]['Line'] + '</td><td>' + data.Trains[i]['Car'] + '</td><td>' + data.Trains[i]['DestinationName'] + '</td><td>' + data.Trains[i]['Min'] + "</td></tr>";
+                            output += '<tr><td>' + data.Trains[i]['Line'] + '</td><td>' + data.Trains[i]['Car'] + '</td><td>' + data.Trains[i]['DestinationName'] + '</td><td style="text-align: right;">' + data.Trains[i]['Min'] + "</td></tr>";
                         }
 
                 } else {

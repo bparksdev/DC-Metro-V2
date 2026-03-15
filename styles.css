@@ -281,13 +281,13 @@ body.station-display .headers {
 
 td {
     padding: 15px 12px;
-    text-align: center;
+    /* text-align: center; */
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 40px;
 }
 
 body.station-display td {
-    text-align: center;
+    /* text-align: center; */
     color: burlywood;
     border-bottom: none;
     padding: 5px 10px;
@@ -605,42 +605,49 @@ body.app-display[data-portrait="true"] .footer {
 }
 
 body.station-display[data-portrait="true"] {
-    font-size: 30px;
+    font-size: 24px;
+    height: calc(var(--vh, 1vh) * 100);
+    max-height: calc(var(--vh, 1vh) * 100);
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    align-content: start;
 }
 
 body.station-display[data-portrait="true"] #currentStation {
-    font-size: 28px;
-    margin-top: 72px;
-    margin-bottom: 6px;
+    font-size: 22px;
+    margin-top: 64px;
+    margin-bottom: 4px;
     width: 100%;
+    line-height: 1.05;
 }
 
 body.station-display[data-portrait="true"] .headers {
-    font-size: 26px;
-    padding: 4px 6px;
+    font-size: 20px;
+    padding: 2px 4px;
 }
 
 body.station-display[data-portrait="true"] td {
-    font-size: 28px;
-    padding: 3px 6px;
+    font-size: 20px;
+    padding: 2px 4px;
     line-height: 1.1;
+    white-space: nowrap;
 }
 
 body.station-display[data-portrait="true"] #trains {
-    max-height: calc(var(--vh, 1vh) * 72);
-    overflow-y: auto;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
 }
 
 body.station-display[data-portrait="true"] .datetime-display {
-    font-size: 20px;
-    margin-top: 10px;
-    padding: 6px;
+    font-size: 16px;
+    margin-top: 4px;
+    padding: 2px;
 }
 
 body.station-display[data-portrait="true"] .footer {
-    font-size: 14px;
-    margin-top: 10px;
-    padding: 8px;
+    display: none;
 }
 
 /* Mobile portrait optimizations */
